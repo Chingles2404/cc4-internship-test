@@ -13,7 +13,10 @@ def get_restaurants_list():
     data = json.load(json_req)
     restaurants = []
     for collection in data:
-        restaurants += collection["restaurants"]
+        for restaurant in collection["restaurants"]:
+            # remove restaurants with dummy values
+            if int(restaurant["restaurant"]["location"]["country_id"]) != 17:
+                restaurants.append(restaurant)
     return restaurants
 
 """
@@ -48,21 +51,8 @@ def country_codes():
     return codes
     
 def modify_to_country(restaurants, codes):
-    counter = 0
-    while counter < len(restaurants):
-        try:
-            restaurants[counter]["Country"] = codes[restaurants[counter]["Country"]]
-        except:
-            # By doing
-            # print(restaurant["Country"], restaurant["Restaurant Name"])
-            # It was discovered that the country codes are consistently 17.
-            # Upon looking at the JSON file, it was observed that all restaurants with country code 17 had their city listed as Dummy
-            # Therefore, we will assume that these restaurants do not exist, and we will remove these entries
-            print(restaurants[counter])
-            restaurants.pop(counter)
-            counter -= 1
-            KeyError
-        counter += 1
+    for restaurant in restaurants:
+        restaurant["Country"] = codes[restaurant["Country"]]
 
 def create_restaurants(restaurants):
     new_file = open("restaurant.csv", "w", encoding="utf-8")
@@ -78,32 +68,58 @@ def create_restaurants(restaurants):
     new_file.close()
 
 
-
+"""
 restaurant_list = get_restaurants_list()
 restaurants = get_restaurants_info(restaurant_list)
 codes = country_codes()
 modify_to_country(restaurants, codes)
 create_restaurants(restaurants)
-
+"""
 
 
 # ------------------------------
 
 
 
-def get_events():
-    json_req = request.urlopen('https://raw.githubusercontent.com/Papagoat/brain-assessment/main/restaurant_data.json')
-    data = json.load(json_req)
-    restaurants = data[0]["restaurants"]
-    print(len(restaurants))
+def get_events(restaurant_list):
     result = []
-    for restaurant in restaurants:
+    for restaurant in restaurant_list:
         try: 
             for event in restaurant["restaurant"]["zomato_events"]:
-                start_month = int(event["event"]["start_date"].split("-")[1])
-                end_month = int(event["event"]["end_date"].split("-")[1])
-                print(start_month, end_month)
+                start_date = event["event"]["start_date"].split("-")
+                end_date = event["event"]["end_date"].split("-")
+                start_year = int(start_date[0])
+                start_month = int(start_date[1])
+                end_year = int(end_date[0])
+                end_month = int(end_date[1])
+                if (end_year > 2019 or (end_year == 2019 and end_month >= 4)) and (start_year < 2019 or (start_year == 2019 and start_month <= 4)):
+                    temp = {}
+                    temp["Event Id"] = event["event"]["event_id"]
+                    temp["Restaurant Id"] = restaurant["restaurant"]["id"]
+                    temp["Restaurant Name"] = restaurant["restaurant"]["name"]
+                    temp["Photo URL"] = restaurant["restaurant"]["photos_url"]
+                    # some titles have newlines which do not conform to csv formatting
+                    temp["Event Title"] = event["event"]["title"].strip()
+                    temp["Event Start Date"] = event["event"]["start_date"]
+                    temp["Event End Date"] = event["event"]["end_date"]
+                    result.append(temp)
         except:
             KeyError
+    return result
 
-#get_events()
+def create_events(restaurants):
+    new_file = open("restaurant_events.csv", "w", encoding="utf-8")
+    write_list = []
+    temp = ""
+    for key in restaurants[0].keys():
+        temp += key + ","
+    write_list.append(temp[:-1] + "\n")
+    for restaurant in restaurants:
+        temp = f'{restaurant["Event Id"]},{restaurant["Restaurant Id"]},{restaurant["Restaurant Name"]},{restaurant["Photo URL"]},{restaurant["Event Title"]},{restaurant["Event Start Date"]},{restaurant["Event End Date"]}\n'
+        write_list.append(temp)
+    new_file.writelines(write_list)
+    new_file.close()
+    print("done")
+
+
+create_events(get_events(get_restaurants_list()))
