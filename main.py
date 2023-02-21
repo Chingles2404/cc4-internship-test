@@ -14,6 +14,7 @@ def get_restaurants_list():
     json_req = request.urlopen('https://raw.githubusercontent.com/Papagoat/brain-assessment/main/restaurant_data.json')
     data = json.load(json_req)
     restaurants = []
+
     for collection in data:
         for restaurant in collection["restaurants"]:
             # remove restaurants with dummy values
@@ -46,6 +47,7 @@ def get_restaurants_info(restaurant_list):
     result = []
     for restaurant in restaurant_list:
         temp = {}
+
         temp["Restaurant Id"] = restaurant["restaurant"]["id"]
         temp["Restaurant Name"] = restaurant["restaurant"]["name"]
         temp["Country"] = restaurant["restaurant"]["location"]["country_id"]
@@ -53,8 +55,11 @@ def get_restaurants_info(restaurant_list):
         temp["User Rating Votes"] = restaurant["restaurant"]["user_rating"]["votes"]
         temp["User Aggregate Rating"] = float(restaurant["restaurant"]["user_rating"]["aggregate_rating"])
         temp["Cuisines"] = restaurant["restaurant"]["cuisines"]
+
         result.append(temp)
     return result
+
+
 
 def country_codes():
     """ Extract country codes from the Country-Code.xlsx Excel sheet and return the information as a dictionary """
@@ -64,6 +69,8 @@ def country_codes():
         codes[data.loc[row, "Country Code"]] = data.loc[row, "Country"]
     return codes
     
+
+
 def modify_to_country(restaurants, codes):
     """
     Replaces the country code in each restaurant's information with the country name
@@ -75,6 +82,8 @@ def modify_to_country(restaurants, codes):
     for restaurant in restaurants:
         restaurant["Country"] = codes[restaurant["Country"]]
 
+
+
 def create_restaurants(restaurants):
     """
     Creates the file restaurant.csv that displays the information of each restaurant
@@ -85,12 +94,16 @@ def create_restaurants(restaurants):
     new_file = open("restaurant.csv", "w", encoding="utf-8")
     write_list = []
     temp = ""
+
     for keys in restaurants[0].keys():
         temp += keys + ","
+
     write_list.append(temp[:-1] + "\n")
+
     for restaurant in restaurants:
         temp = f'{restaurant["Restaurant Id"]},{restaurant["Restaurant Name"]},{restaurant["Country"]},{restaurant["City"]},{restaurant["User Rating Votes"]},{restaurant["User Aggregate Rating"]},{restaurant["Cuisines"]}\n'
         write_list.append(temp)
+
     new_file.writelines(write_list)
     new_file.close()
     print("File restaurant.csv created successfully.")
@@ -123,22 +136,25 @@ def get_events(restaurant_list):
             for event in restaurant["restaurant"]["zomato_events"]:
                 start_date = event["event"]["start_date"].split("-")
                 end_date = event["event"]["end_date"].split("-")
+
                 start_year = int(start_date[0])
                 start_month = int(start_date[1])
                 end_year = int(end_date[0])
                 end_month = int(end_date[1])
+
                 if (end_year > 2019 or (end_year == 2019 and end_month >= 4)) and (start_year < 2019 or (start_year == 2019 and start_month <= 4)):
                     temp = {}
                     temp["Event Id"] = event["event"]["event_id"]
                     temp["Restaurant Id"] = restaurant["restaurant"]["id"]
                     temp["Restaurant Name"] = restaurant["restaurant"]["name"]
                     temp["Photo URL"] = event["event"]["photos"]
-                    # some titles have newlines which do not conform to CSV formatting
-                    temp["Event Title"] = event["event"]["title"].strip()
+                    temp["Event Title"] = event["event"]["title"]
                     temp["Event Start Date"] = event["event"]["start_date"]
                     temp["Event End Date"] = event["event"]["end_date"]
                     result.append(temp)
     return result
+
+
 
 def get_photo_url(events):
     """
@@ -149,12 +165,16 @@ def get_photo_url(events):
     """
     for event in events:
         temp = []
+
         if len(event["Photo URL"]) == 0:
             temp.append("NA")
         else:
             for photo in event["Photo URL"]:
                 temp.append(photo["photo"]["url"])
+
         event["Photo URL"] = temp
+
+
 
 def create_events(events):
     """
@@ -166,12 +186,21 @@ def create_events(events):
     new_file = open("restaurant_events.csv", "w", encoding="utf-8")
     write_list = []
     temp = ""
+
     for key in events[0].keys():
         temp += key + ","
+
     write_list.append(temp[:-1] + "\n")
+
     for event in events:
-        temp = f'{event["Event Id"]},{event["Restaurant Id"]},{event["Restaurant Name"]},{";".join(event["Photo URL"])},{event["Event Title"]},{event["Event Start Date"]},{event["Event End Date"]}\n'
+        # some titles may have newlines and commas which would affect CSV formatting
+        stripped = event["Event Title"].strip()
+        newline_free = " ".join(stripped.split("\n"))
+        comma_newline_free = ";".join(newline_free.split(","))
+
+        temp = f'{event["Event Id"]},{event["Restaurant Id"]},{event["Restaurant Name"]},{";".join(event["Photo URL"])},{comma_newline_free},{event["Event Start Date"]},{event["Event End Date"]}\n'
         write_list.append(temp)
+
     new_file.writelines(write_list)
     new_file.close()
     print("File restaurant_events.csv created successfully.")
