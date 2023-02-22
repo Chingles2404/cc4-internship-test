@@ -9,7 +9,7 @@ First, using the terminal, navigate to the directory where the files are stored.
 
 Next, run `pip install -r requirements.txt`.
 
-Then, run `main.py`.
+Then, run `python main.py`.
 
 ## Decisions
 I decided to get `restaurant_data.json` from the URL instead of downloading the file and using it locally to prevent the data from potentially being edited by users.
