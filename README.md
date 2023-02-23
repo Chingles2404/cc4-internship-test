@@ -22,9 +22,9 @@ Although Part 2 stated to "extract the list of restaurants", the list of data ne
 
 I decided to modify the event titles when populating the `restaurant_events.csv` file to ensure the entire title is within a cell by removing newline characters and commas.
 
-I discovered that there were some restaurants with a non-English rating text. Although I could guess what the text means based on the aggregate rating and recompute the ranges for each text from it, I decided not to do it. This is because Part 3's instructions stated which rating texts to include, which I interpreted to mean that the rating texts must be exactly equivalent to one of the listed texts, rahter than the meaning of the text to be equivalent to the meaning of one of the listed texts.
+I discovered that there were some restaurants with a non-English rating text. Although I could guess what the text means based on the aggregate rating and recompute the ranges for each text from it, I decided not to do it. This is because Part 3's instructions stated which rating texts to include, which I interpreted to mean that the rating texts must be exactly equivalent to one of the listed texts, rather than the meaning of the text to be equivalent to the meaning of one of the listed texts.
 
-I added [doctrings](https://peps.python.org/pep-0257/) to better document the code.
+I added [docstrings](https://peps.python.org/pep-0257/) to better document the code.
 
 ## Summary for Consideration of Cloud Services
 To deploy the program to a cloud service, it would be ideal to first rewrite the program as a web application. This is to allow users to interact with the program easily, without requiring much technical skills. This can be done by making use of Flask within an `app.py` file. Jinja2 can be used within the HTML files to render objects on the frontend. 
